@@ -1,20 +1,54 @@
+// ************
+// SETUP
+// ************
+
 let canvas = document.getElementById("gameCanvas");
 let ctx = canvas.getContext("2d");
 
-window.devicePixelRatio = 2;
+const scale = window.devicePixelRatio;  
+ctx.scale(scale, scale);
 
-const textSize = 80; // in px
-
-var scale = window.devicePixelRatio;  
-            
-canvas.width = window.innerWidth; 
+canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// START THE GAME
-	// Title
-ctx.scale(scale, scale);
+// ************
+// CONFIGURATION
+// ************
+
+// UI Values
+const textSize = 80; // in px
+
+// Game settings
+const framesPerSecond = 30;
+const gameLives = 3;
+
+// Points
+const saveScore = "highScore"; // save key for local storage
+
+// ************
+// INTRO SCREEN
+// ************
+
+// Title
 ctx.fillStyle = "rgba(193,193,193,1.00)";
-ctx.font = "normal small-caps" + textSize + "px";
+ctx.font = "small-caps " + textSize + "px monospace";
 ctx.textAlign   = "center";
-ctx.textBaseline = "middle";
-ctx.fillText("ASTRO ASSAULT", canvas.width / 4, canvas.height / 4);
+ctx.fillText("ASTRO ASSAULT", canvas.width / 2, canvas.height / 2);
+
+// New game prompt
+ctx.font = "small-caps " + (textSize / 2) + "px monospace";
+ctx.fillText("PRESS ANY KEY TO START", canvas.width / 2, canvas.height / 2 + textSize);
+document.addEventListener("keydown", newGame);
+
+
+// ************
+// START NEW GAME
+// ************
+
+function newGame () {
+  // Clean up
+  ctx.clearRect(0, 0, canvas.width, canvas.height); 
+	document.removeEventListener("keydown", newGame);
+
+  console.log("New game started")
+}

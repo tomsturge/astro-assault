@@ -22,8 +22,11 @@ const whiteColorRgb = "191, 191, 191";
 
 /* Game settings */
 const framesPerSecond = 30;
+const friction = 0.5; // friction coefficient of space
 const gameLives = 3;
 const shipSize = 30; // height in pixels
+const shipThrust = 5; // acceleration of the ship px per sec
+const shipTurnSpeed = 360; // degrees per second
 
 /* Points */
 const saveScore = "highScore"; // save key for local storage
@@ -43,7 +46,7 @@ countdownSound.volume = 0.4;
 battleMusic.volume = 0.15;
 
 /* Music storage */
-const hasToggledMusic = localStorage.getItem('hasToggledMusic');
+const hasToggledMusic = localStorage.getItem("hasToggledMusic");
 
 // *****
 // Elements
@@ -79,7 +82,6 @@ if (hasToggledMusic) {
   musicPromptElement.remove();
 }
 
-
 // ============
 // CORE FUNCTIONS
 // ============
@@ -108,6 +110,26 @@ const newShip = () => ({
     y: 0,
   },
 });
+
+const drawShip = (x, y, a, color = "#bfbfbf") => {
+  ctx.fillStyle = color;
+  ctx.lineWidth = shipSize / 20;
+  ctx.beginPath();
+  ctx.moveTo(
+    x + (5 / 3) * ship.r * Math.cos(a),
+    y - (5 / 3) * ship.r * Math.sin(a),
+  );
+  ctx.lineTo(
+    x - ship.r * ((2 / 3) * Math.cos(a) + Math.sin(a)),
+    y + ship.r * ((2 / 3) * Math.sin(a) - Math.cos(a)),
+  );
+  ctx.lineTo(
+    x - ship.r * ((2 / 3) * Math.cos(a) - Math.sin(a)),
+    y + ship.r * ((2 / 3) * Math.sin(a) + Math.cos(a)),
+  );
+  ctx.closePath();
+  ctx.fill();
+};
 
 // *****
 // New Level
@@ -159,7 +181,7 @@ const music = (state = true) => {
 // *****
 const musicToggle = () => {
   if (!hasToggledMusic) {
-    localStorage.setItem('hasToggledMusic', true);
+    localStorage.setItem("hasToggledMusic", true);
     musicPromptElement.remove();
   }
 
@@ -174,6 +196,9 @@ const musicToggle = () => {
   }
 };
 
+// *****
+// Key press handling
+// *****
 const keyDown = (e) => {
   if (ship && ship.dead) {
     return;
@@ -183,9 +208,41 @@ const keyDown = (e) => {
     case 32:
       if (screen === "intro") newGame();
       break;
+    // Left arrow
+    case 37:
+      ship.rotation = ((shipTurnSpeed / 180) * Math.PI) / framesPerSecond;
+      break;
+    // Up arrow
+    case 38:
+      ship.thrusting = true;
+      break;
+    // Right arrow
+    case 39:
+      ship.rotation = ((-shipTurnSpeed / 180) * Math.PI) / framesPerSecond;
+      break;
     // Toggle music
     case 77:
       musicToggle();
+      break;
+  }
+};
+
+// *****
+// Key release handling
+// *****
+const keyUp = (e) => {
+  switch (e.keyCode) {
+    // Left arrow
+    case 37:
+      ship.rotation = 0;
+      break;
+    // Up arrow
+    case 38:
+      ship.thrusting = false;
+      break;
+    // Right arrow
+    case 39:
+      ship.rotation = 0;
       break;
   }
 };
@@ -233,7 +290,7 @@ const newGame = () => {
   lives = gameLives;
   ship = newShip();
 
-  //High score from local storage
+  // High score from local storage
   let scoreStr = localStorage.getItem(saveScore);
   if (scoreStr === null) {
     highScore = 0;
@@ -253,9 +310,30 @@ const update = () => {
 
   if (screen === "intro") {
     introScreen();
+  } else {
+    drawShip(ship.x, ship.y, ship.a);
   }
 
-  // DRAW THE GAME TEXT
+  // Thrust the ship
+  if (ship) {
+    if (ship.thrusting && !ship.dead) {
+      ship.thrust.x += (shipThrust * Math.cos(ship.a)) / framesPerSecond;
+      ship.thrust.y -= (shipThrust * Math.sin(ship.a)) / framesPerSecond;
+    } else {
+      // Apply space friction when no thrusting
+      ship.thrust.x -= (friction * ship.thrust.x) / framesPerSecond;
+      ship.thrust.y -= (friction * ship.thrust.y) / framesPerSecond;
+    }
+
+    // Rotate the ship
+    ship.a += ship.rotation;
+
+    // Move the ship
+    ship.x += ship.thrust.x;
+    ship.y += ship.thrust.y;
+  }
+
+  // Draw the game text
   if (textAlpha >= 0) {
     ctx.fillStyle = "rgba(" + whiteColorRgb + ", " + textAlpha + ")";
     ctx.font = "small-caps " + (textSize + 20) + "px " + fontFamily;
@@ -278,9 +356,9 @@ musicElement.addEventListener("click", musicToggle);
 // Key bindings listener
 // *****
 document.addEventListener("keydown", keyDown);
+document.addEventListener("keyup", keyUp);
 
 // *****
 // Create game loop
 // *****
 setInterval(update, 1000 / framesPerSecond);
-

@@ -1,7 +1,6 @@
-
 @font-face {
-  font-family: 'micro5';
-  src:  url('assets/fonts/micro5.woff2') format('woff2'),
+  font-family: "micro5";
+  src: url("assets/fonts/micro5.woff2") format("woff2");
 }
 
 * {
@@ -58,9 +57,9 @@ canvas {
   height: 2.25rem;
   width: 2.25rem;
   color: #bfbfbf;
-  border: .25rem solid #bfbfbf;
-  margin-top: .25rem;
-   animation: bob 1000ms ease-in-out infinite alternate;
+  border: 0.25rem solid #bfbfbf;
+  margin-top: 0.25rem;
+  animation: bob 1000ms ease-in-out infinite alternate;
 }
 
 .music-prompt:before {
@@ -75,7 +74,7 @@ canvas {
 
 @keyframes bob {
   from {
-  transform: translateY(1rem);
+    transform: translateY(1rem);
   }
 
   to {

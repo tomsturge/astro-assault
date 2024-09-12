@@ -1,15 +1,29 @@
-
 <html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Astro Assault</title>
-		<link rel="stylesheet" href="styles.css">
-	</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Assault</title>
 
-	<body>
-			<canvas id="gameCanvas" width="100vw" height="100vh"></canvas>
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.13.1/css/all.css"
+      integrity="sha384-xxzQGERXS00kBmZW/6qxqJPyxW3UR0BPsL4c8ILaIWXva5kFi7TxkIIaMiKtqV1Q"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-      <script src="script.js"></script>
-	</body>
+  <body>
+    <i
+      id="music"
+      class="fas fa-music mute"
+      aria-hidden="true"
+      aria-label="sound off"
+    ></i>
+
+    <main tabindex="0">
+      <canvas id="gameCanvas"></canvas>
+    </main>
+    <script src="script.js"></script>
+  </body>
 </html>

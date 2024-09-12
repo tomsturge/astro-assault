@@ -1,20 +1,37 @@
-*{
-	margin: 0;
-	padding: 0;
-	box-sizing: border-box;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-body{
-	height: 100vh;
+body {
+  height: 100vh;
 }
 
-canvas{
-  background-color: rgba(17,17,17,1.00);
+canvas {
+  background-color: rgba(17, 17, 17, 1);
   width: 100vw;
   height: 100vh;
 }
 
-#alert{
-	display: none;
+#music {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: block;
+  z-index: 10;
+  color: #bfbfbf;
+  cursor: pointer;
 }
 
+.fa-music.mute::after {
+  content: "";
+  background-color: #bfbfbf;
+  height: 1.5rem;
+  width: 0.125rem;
+  position: absolute;
+  border-radius: 10px;
+  transform: rotate(-55deg) translate(-95%, -35%);
+}

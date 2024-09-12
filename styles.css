@@ -1,3 +1,9 @@
+
+@font-face {
+  font-family: 'micro5';
+  src:  url('assets/fonts/micro5.woff2') format('woff2'),
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -14,25 +20,65 @@ canvas {
   height: 100vh;
 }
 
-#music {
+.controls {
   position: absolute;
   top: 2rem;
   right: 2rem;
+  z-index: 10;
+}
+
+.music-control {
   width: 2.5rem;
   height: 2.5rem;
   font-size: 2rem;
   display: block;
-  z-index: 10;
   color: #bfbfbf;
   cursor: pointer;
+  position: relative;
 }
 
-.fa-music.mute::after {
+.music-control.mute::after {
   content: "";
   background-color: #c37272;
   height: 3rem;
   width: 0.5rem;
   position: absolute;
-  border-radius: 10px;
-  transform: rotate(-55deg) translate(-50%, -40%);
+  top: 0;
+  right: 0;
+  transform: rotate(-55deg) translate(-50%, -35%);
+}
+
+.music-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: micro5, monospace;
+  position: relative;
+  font-size: 1.75rem;
+  height: 2.25rem;
+  width: 2.25rem;
+  color: #bfbfbf;
+  border: .25rem solid #bfbfbf;
+  margin-top: .25rem;
+   animation: bob 1000ms ease-in-out infinite alternate;
+}
+
+.music-prompt:before {
+  content: "^";
+  display: block;
+  position: absolute;
+  font-size: 2.5rem;
+  top: -1.625rem;
+  left: 50%;
+  transform: translateX(-45%);
+}
+
+@keyframes bob {
+  from {
+  transform: translateY(1rem);
+  }
+
+  to {
+    transform: translateY(1.25rem);
+  }
 }

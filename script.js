@@ -28,33 +28,57 @@ const shipSize = 30; // height in pixels
 /* Points */
 const saveScore = "highScore"; // save key for local storage
 
-/* Music */
-const introMusic = new Audio("./audio/intro-bg.mp3");
-const battleMusic = new Audio("./audio/battle-bg.mp3");
+// *****
+// Music
+// *****
+
+/* Audio files */
+const introMusic = new Audio("assets/audio/intro-bg.mp3");
+const countdownSound = new Audio("assets/audio/countdown.mp3");
+const battleMusic = new Audio("assets/audio/battle-bg.mp3");
+
+/* Adjust volumes */
 introMusic.volume = 0.5;
-battleMusic.volume = 0.2;
+countdownSound.volume = 0.4;
+battleMusic.volume = 0.15;
+
+/* Music storage */
+const hasToggledMusic = localStorage.getItem('hasToggledMusic');
+
+// *****
+// Elements
+// *****
+
+const canvasElement = document.getElementById("gameCanvas");
+const mainElement = document.querySelector("main");
+const musicElement = document.querySelector(".music-control");
+const musicPromptElement = document.querySelector(".music-prompt");
 
 // ============
 // SETUP
 // ============
 
-/* Capture canvas */
-let canvas = document.getElementById("gameCanvas");
-let ctx = canvas.getContext("2d");
-document.querySelector("main").focus();
+/* Canvas context */
+const ctx = canvasElement.getContext("2d");
+mainElement.focus();
 
 /* Define canvas scale and size */
 const scale = window.devicePixelRatio;
 
 ctx.scale(scale, scale);
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvasElement.width = window.innerWidth;
+canvasElement.height = window.innerHeight;
 
 /* Load custom font */
-new FontFace("micro5", "url(fonts/micro5.woff2)").load().then((font) => {
-  document.fonts.add(font);
-  console.log("Micro5 Font loaded");
-});
+new FontFace("micro5", "url(assets/fonts/micro5.woff2)")
+  .load()
+  .then((font) => document.fonts.add(font));
+
+/* Hide music prompt if user has toggled music */
+if (hasToggledMusic) {
+  musicPromptElement.remove();
+}
+
 
 // ============
 // CORE FUNCTIONS
@@ -65,12 +89,12 @@ new FontFace("micro5", "url(fonts/micro5.woff2)").load().then((font) => {
 // *****
 const clearScreen = () => {
   ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
 };
 
 const newShip = () => ({
-  x: canvas.width / 2,
-  y: canvas.height / 2,
+  x: canvasElement.width / 2,
+  y: canvasElement.height / 2,
   r: shipSize / 2,
   a: (90 / 180) * Math.PI, // radiant
   canShoot: true,
@@ -101,15 +125,28 @@ const newLevel = () => {
 const music = (state = true) => {
   if (musicOn && state) {
     if (!ship) {
+      // Stop battle music and rest time
       battleMusic.pause();
+      countdownSound.currentTime = 0;
       battleMusic.currentTime = 0;
+
+      // Play calm intro music
       introMusic.play();
     } else {
+      // Stop intro music and reset time
       introMusic.pause();
       introMusic.currentTime = 0;
-      battleMusic.play();
+
+      // Start new game countdown
+      countdownSound.play();
+
+      // Delay battle music for countdown
+      setTimeout(() => {
+        battleMusic.play();
+      }, 2900);
     }
   } else {
+    // Stop all music and reset time
     battleMusic.pause();
     battleMusic.currentTime = 0;
     introMusic.pause();
@@ -117,12 +154,16 @@ const music = (state = true) => {
   }
 };
 
-
 // *****
 // Music toggle state and icon
 // *****
 const musicToggle = () => {
-  document.querySelector("#music").classList.toggle("mute");
+  if (!hasToggledMusic) {
+    localStorage.setItem('hasToggledMusic', true);
+    musicPromptElement.remove();
+  }
+
+  musicElement.classList.toggle("mute");
 
   if (musicOn === false) {
     musicOn = true;
@@ -134,20 +175,20 @@ const musicToggle = () => {
 };
 
 const keyDown = (e) => {
-	if (ship && ship.dead) {
-		return;
-	}
-  
-	switch (e.keyCode) {
+  if (ship && ship.dead) {
+    return;
+  }
+
+  switch (e.keyCode) {
     case 32:
-      if ( screen === 'intro') newGame();
+      if (screen === "intro") newGame();
       break;
-		// Toggle music
-		case 77:
+    // Toggle music
+    case 77:
       musicToggle();
-			break;
-	}
-}
+      break;
+  }
+};
 
 // ============
 // SCREENS
@@ -160,19 +201,23 @@ const introScreen = () => {
   screen = "intro";
   /* Background */
   ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
   /* Title */
   ctx.fillStyle = redColor;
   ctx.font = "small-caps " + textSize + "px " + fontFamily;
   ctx.textAlign = "center";
-  ctx.fillText("ASTRO ASSAULT", canvas.width / 2, canvas.height / 2);
+  ctx.fillText(
+    "ASTRO ASSAULT",
+    canvasElement.width / 2,
+    canvasElement.height / 2,
+  );
   /* New game prompt */
   ctx.fillStyle = whiteColor;
   ctx.font = "small-caps " + textSize / 3 + "px " + fontFamily;
   ctx.fillText(
     "PRESS SPACE TO START",
-    canvas.width / 2,
-    canvas.height / 2 + textSize / 2,
+    canvasElement.width / 2,
+    canvasElement.height / 2 + textSize / 2,
   );
 };
 
@@ -212,10 +257,10 @@ const update = () => {
 
   // DRAW THE GAME TEXT
   if (textAlpha >= 0) {
-    ctx.fillStyle = "rgba("+ whiteColorRgb + ", " + textAlpha + ")";
+    ctx.fillStyle = "rgba(" + whiteColorRgb + ", " + textAlpha + ")";
     ctx.font = "small-caps " + (textSize + 20) + "px " + fontFamily;
     ctx.textAlign = "center";
-    ctx.fillText(text, canvas.width / 2, canvas.height * 0.7);
+    ctx.fillText(text, canvasElement.width / 2, canvasElement.height * 0.7);
     textAlpha -= 1.0 / textFadeTime / framesPerSecond;
   }
 };
@@ -227,7 +272,7 @@ const update = () => {
 // *****
 // Audio UI toggles
 // *****
-document.querySelector("#music").addEventListener("click", musicToggle);
+musicElement.addEventListener("click", musicToggle);
 
 // *****
 // Key bindings listener
@@ -238,3 +283,4 @@ document.addEventListener("keydown", keyDown);
 // Create game loop
 // *****
 setInterval(update, 1000 / framesPerSecond);
+

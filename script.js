@@ -9,6 +9,7 @@
 /* Defaults values */
 let screen = "intro";
 let musicOn = false;
+let gameTime = 0;
 let level, roids, ship, lives, score, highScore, text, textAlpha;
 
 /* UI Values */
@@ -40,7 +41,7 @@ const introMusic = new Audio("assets/audio/intro-bg.mp3");
 const countdownSound = new Audio("assets/audio/countdown.mp3");
 const battleMusic = new Audio("assets/audio/battle-bg.mp3");
 
-/* Adjust volumes */
+/* Adjust music playback */
 introMusic.volume = 0.5;
 countdownSound.volume = 0.4;
 battleMusic.volume = 0.15;
@@ -52,7 +53,8 @@ const hasToggledMusic = localStorage.getItem("hasToggledMusic");
 // Elements
 // *****
 
-const canvasElement = document.getElementById("gameCanvas");
+const canvas = document.getElementById("gameCanvas");
+
 const mainElement = document.querySelector("main");
 const musicElement = document.querySelector(".music-control");
 const musicPromptElement = document.querySelector(".music-prompt");
@@ -62,15 +64,15 @@ const musicPromptElement = document.querySelector(".music-prompt");
 // ============
 
 /* Canvas context */
-const ctx = canvasElement.getContext("2d");
+const ctx = canvas.getContext("2d");
 mainElement.focus();
 
 /* Define canvas scale and size */
 const scale = window.devicePixelRatio;
 
 ctx.scale(scale, scale);
-canvasElement.width = window.innerWidth;
-canvasElement.height = window.innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 /* Load custom font */
 new FontFace("micro5", "url(assets/fonts/micro5.woff2)")
@@ -91,12 +93,15 @@ if (hasToggledMusic) {
 // *****
 const clearScreen = () => {
   ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 };
 
+// *****
+// Set new ship values
+// *****
 const newShip = () => ({
-  x: canvasElement.width / 2,
-  y: canvasElement.height / 2,
+  x: canvas.width / 2,
+  y: canvas.height / 2,
   r: shipSize / 2,
   a: (90 / 180) * Math.PI, // radiant
   canShoot: true,
@@ -111,6 +116,9 @@ const newShip = () => ({
   },
 });
 
+// *****
+// Create ship
+// *****
 const drawShip = (x, y, a, color = "#bfbfbf") => {
   ctx.fillStyle = color;
   ctx.lineWidth = shipSize / 20;
@@ -129,6 +137,23 @@ const drawShip = (x, y, a, color = "#bfbfbf") => {
   );
   ctx.closePath();
   ctx.fill();
+};
+
+// *****
+// Handle ship screen edge
+// *****
+const handleShipScreenEdge = () => {
+  if (ship.x < 0 - ship.r) {
+    ship.x = canvas.width + ship.r;
+  } else if (ship.x > canvas.width + ship.r) {
+    ship.x = 0 - ship.r;
+  }
+
+  if (ship.y < 0 - ship.r) {
+    ship.y = canvas.height + ship.r;
+  } else if (ship.y > canvas.height + ship.r) {
+    ship.y = 0 - ship.r;
+  }
 };
 
 // *****
@@ -159,13 +184,17 @@ const music = (state = true) => {
       introMusic.pause();
       introMusic.currentTime = 0;
 
-      // Start new game countdown
-      countdownSound.play();
+      if (gameTime < 10) {
+        // Start new game countdown
+        countdownSound.play();
 
-      // Delay battle music for countdown
-      setTimeout(() => {
+        // Delay battle music for countdown
+        setTimeout(() => {
+          battleMusic.play();
+        }, 2900);
+      } else {
         battleMusic.play();
-      }, 2900);
+      }
     }
   } else {
     // Stop all music and reset time
@@ -258,23 +287,19 @@ const introScreen = () => {
   screen = "intro";
   /* Background */
   ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   /* Title */
   ctx.fillStyle = redColor;
   ctx.font = "small-caps " + textSize + "px " + fontFamily;
   ctx.textAlign = "center";
-  ctx.fillText(
-    "ASTRO ASSAULT",
-    canvasElement.width / 2,
-    canvasElement.height / 2,
-  );
+  ctx.fillText("ASTRO ASSAULT", canvas.width / 2, canvas.height / 2);
   /* New game prompt */
   ctx.fillStyle = whiteColor;
   ctx.font = "small-caps " + textSize / 3 + "px " + fontFamily;
   ctx.fillText(
     "PRESS SPACE TO START",
-    canvasElement.width / 2,
-    canvasElement.height / 2 + textSize / 2,
+    canvas.width / 2,
+    canvas.height / 2 + textSize / 2,
   );
 };
 
@@ -309,8 +334,10 @@ const update = () => {
   clearScreen();
 
   if (screen === "intro") {
+    gameTime = 0;
     introScreen();
   } else {
+    gameTime += 1;
     drawShip(ship.x, ship.y, ship.a);
   }
 
@@ -331,6 +358,9 @@ const update = () => {
     // Move the ship
     ship.x += ship.thrust.x;
     ship.y += ship.thrust.y;
+
+    // Handle edge of screen
+    handleShipScreenEdge();
   }
 
   // Draw the game text
@@ -338,7 +368,7 @@ const update = () => {
     ctx.fillStyle = "rgba(" + whiteColorRgb + ", " + textAlpha + ")";
     ctx.font = "small-caps " + (textSize + 20) + "px " + fontFamily;
     ctx.textAlign = "center";
-    ctx.fillText(text, canvasElement.width / 2, canvasElement.height * 0.7);
+    ctx.fillText(text, canvas.width / 2, canvas.height * 0.7);
     textAlpha -= 1.0 / textFadeTime / framesPerSecond;
   }
 };

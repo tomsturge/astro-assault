@@ -139,6 +139,29 @@ const drawShip = (x, y, a, color = "#bfbfbf") => {
   ctx.fill();
 };
 
+const drawThruster = () => {
+  ctx.strokeStyle = whiteColor;
+  ctx.lineWidth = shipSize / 10;
+  ctx.beginPath();
+  // left
+  ctx.moveTo(
+    ship.x - ship.r * ((2 / 3) * Math.cos(ship.a) + 0.5 * Math.sin(ship.a)),
+    ship.y + ship.r * ((2 / 3) * Math.sin(ship.a) - 0.5 * Math.cos(ship.a)),
+  );
+  // center, behind the ship
+  ctx.lineTo(
+    ship.x - ship.r * ((5 / 3) * Math.cos(ship.a)),
+    ship.y + ship.r * ((5 / 3) * Math.sin(ship.a)),
+  );
+  // right
+  ctx.lineTo(
+    ship.x - ship.r * ((2 / 3) * Math.cos(ship.a) - 0.5 * Math.sin(ship.a)),
+    ship.y + ship.r * ((2 / 3) * Math.sin(ship.a) + 0.5 * Math.cos(ship.a)),
+  );
+  ctx.closePath();
+  ctx.stroke();
+};
+
 // *****
 // Handle ship screen edge
 // *****
@@ -341,13 +364,15 @@ const update = () => {
     drawShip(ship.x, ship.y, ship.a);
   }
 
-  // Thrust the ship
   if (ship) {
     if (ship.thrusting && !ship.dead) {
+      // Thrust the ship
       ship.thrust.x += (shipThrust * Math.cos(ship.a)) / framesPerSecond;
       ship.thrust.y -= (shipThrust * Math.sin(ship.a)) / framesPerSecond;
+
+      drawThruster();
     } else {
-      // Apply space friction when no thrusting
+      // Reduce speed when not thrusting
       ship.thrust.x -= (friction * ship.thrust.x) / framesPerSecond;
       ship.thrust.y -= (friction * ship.thrust.y) / framesPerSecond;
     }

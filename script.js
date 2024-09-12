@@ -12,8 +12,9 @@ let musicOn = false;
 let level, roids, ship, lives, score, highScore, text, textAlpha;
 
 /* UI Values */
-const textSize = 80; // in px
+const textSize = 180; // in px
 const textFadeTime = 3; // in seconds
+const fontFamily = "micro5";
 
 /* Game settings */
 const framesPerSecond = 30;
@@ -44,6 +45,12 @@ const scale = window.devicePixelRatio;
 ctx.scale(scale, scale);
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
+
+/* Load custom font */
+new FontFace("micro5", "url(fonts/micro5.woff2)").load().then((font) => {
+  document.fonts.add(font);
+  console.log("Micro5 Font loaded");
+});
 
 // ============
 // CORE FUNCTIONS
@@ -130,15 +137,15 @@ const introScreen = () => {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   /* Title */
   ctx.fillStyle = "rgba(193,193,193,1.00)";
-  ctx.font = "small-caps " + textSize + "px monospace";
+  ctx.font = "small-caps " + textSize + "px " + fontFamily;
   ctx.textAlign = "center";
   ctx.fillText("ASTRO ASSAULT", canvas.width / 2, canvas.height / 2);
   /* New game prompt */
-  ctx.font = "small-caps " + textSize / 2 + "px monospace";
+  ctx.font = "small-caps " + textSize / 3 + "px " + fontFamily;
   ctx.fillText(
     "PRESS ANY KEY TO START",
     canvas.width / 2,
-    canvas.height / 2 + textSize,
+    canvas.height / 2 + textSize / 2,
   );
   document.addEventListener("keydown", newGame);
 };
@@ -183,7 +190,7 @@ const update = () => {
   // DRAW THE GAME TEXT
   if (textAlpha >= 0) {
     ctx.fillStyle = "rgba(193, 193, 193, " + textAlpha + ")";
-    ctx.font = "small-caps " + (textSize + 20) + "px monospace";
+    ctx.font = "small-caps " + (textSize + 20) + "px " + fontFamily;
     ctx.textAlign = "center";
     ctx.fillText(text, canvas.width / 2, canvas.height * 0.7);
     textAlpha -= 1.0 / textFadeTime / framesPerSecond;

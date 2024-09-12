@@ -91,6 +91,9 @@ const newLevel = () => {
   // createAsteroidBelt();
 };
 
+// *****
+// Music playing
+// *****
 const music = (state = true) => {
   if (musicOn && state) {
     if (!ship) {
@@ -110,7 +113,10 @@ const music = (state = true) => {
   }
 };
 
-// SWITCH ON/OFF THE MUSIC
+
+// *****
+// Music toggle state and icon
+// *****
 const musicToggle = () => {
   document.querySelector("#music").classList.toggle("mute");
 
@@ -122,6 +128,22 @@ const musicToggle = () => {
     music(false);
   }
 };
+
+const keyDown = (e) => {
+	if (ship && ship.dead) {
+		return;
+	}
+  
+	switch (e.keyCode) {
+    case 32:
+      if ( screen === 'intro') newGame();
+      break;
+		// Toggle music
+		case 77:
+      musicToggle();
+			break;
+	}
+}
 
 // ============
 // SCREENS
@@ -143,11 +165,10 @@ const introScreen = () => {
   /* New game prompt */
   ctx.font = "small-caps " + textSize / 3 + "px " + fontFamily;
   ctx.fillText(
-    "PRESS ANY KEY TO START",
+    "PRESS SPACE TO START",
     canvas.width / 2,
     canvas.height / 2 + textSize / 2,
   );
-  document.addEventListener("keydown", newGame);
 };
 
 // *****
@@ -161,8 +182,6 @@ const newGame = () => {
   score = 0;
   lives = gameLives;
   ship = newShip();
-
-  document.removeEventListener("keydown", newGame);
 
   //High score from local storage
   let scoreStr = localStorage.getItem(saveScore);
@@ -205,6 +224,11 @@ const update = () => {
 // Audio UI toggles
 // *****
 document.querySelector("#music").addEventListener("click", musicToggle);
+
+// *****
+// Key bindings listener
+// *****
+document.addEventListener("keydown", keyDown);
 
 // *****
 // Create game loop

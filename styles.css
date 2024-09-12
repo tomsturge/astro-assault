@@ -18,8 +18,9 @@ canvas {
   position: absolute;
   top: 2rem;
   right: 2rem;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 2rem;
   display: block;
   z-index: 10;
   color: #bfbfbf;
@@ -28,10 +29,10 @@ canvas {
 
 .fa-music.mute::after {
   content: "";
-  background-color: #bfbfbf;
-  height: 1.5rem;
-  width: 0.125rem;
+  background-color: #c37272;
+  height: 3rem;
+  width: 0.5rem;
   position: absolute;
   border-radius: 10px;
-  transform: rotate(-55deg) translate(-95%, -35%);
+  transform: rotate(-55deg) translate(-50%, -40%);
 }

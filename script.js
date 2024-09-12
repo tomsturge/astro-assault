@@ -15,6 +15,10 @@ let level, roids, ship, lives, score, highScore, text, textAlpha;
 const textSize = 180; // in px
 const textFadeTime = 3; // in seconds
 const fontFamily = "micro5";
+const bgColor = "#2c2c2c";
+const redColor = "#c37272";
+const whiteColor = "#bfbfbf";
+const whiteColorRgb = "191, 191, 191";
 
 /* Game settings */
 const framesPerSecond = 30;
@@ -60,7 +64,7 @@ new FontFace("micro5", "url(fonts/micro5.woff2)").load().then((font) => {
 // Clear Screen
 // *****
 const clearScreen = () => {
-  ctx.fillStyle = "rgba(44,44,44,1.00)";
+  ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 };
 
@@ -155,14 +159,15 @@ const keyDown = (e) => {
 const introScreen = () => {
   screen = "intro";
   /* Background */
-  ctx.fillStyle = "rgba(44,44,44,1.00)";
+  ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   /* Title */
-  ctx.fillStyle = "rgba(193,193,193,1.00)";
+  ctx.fillStyle = redColor;
   ctx.font = "small-caps " + textSize + "px " + fontFamily;
   ctx.textAlign = "center";
   ctx.fillText("ASTRO ASSAULT", canvas.width / 2, canvas.height / 2);
   /* New game prompt */
+  ctx.fillStyle = whiteColor;
   ctx.font = "small-caps " + textSize / 3 + "px " + fontFamily;
   ctx.fillText(
     "PRESS SPACE TO START",
@@ -199,8 +204,7 @@ const newGame = () => {
 // Update loop
 // *****
 const update = () => {
-  ctx.fillStyle = "rgba(44,44,44,1.00)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  clearScreen();
 
   if (screen === "intro") {
     introScreen();
@@ -208,7 +212,7 @@ const update = () => {
 
   // DRAW THE GAME TEXT
   if (textAlpha >= 0) {
-    ctx.fillStyle = "rgba(193, 193, 193, " + textAlpha + ")";
+    ctx.fillStyle = "rgba("+ whiteColorRgb + ", " + textAlpha + ")";
     ctx.font = "small-caps " + (textSize + 20) + "px " + fontFamily;
     ctx.textAlign = "center";
     ctx.fillText(text, canvas.width / 2, canvas.height * 0.7);

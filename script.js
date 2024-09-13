@@ -1,3 +1,37 @@
+const canvas = document.getElementById("gameCanvas");
+
+const mainElement = document.querySelector("main");
+const musicElement = document.querySelector(".music-control");
+const musicPromptElement = document.querySelector(".music-prompt");
+
+const hasToggledMusic = localStorage.getItem("hasToggledMusic");
+
+// ============
+// SETUP
+// ============
+
+/* Canvas context */
+const ctx = canvas.getContext("2d");
+
+mainElement.focus();
+
+/* Define canvas scale and size */
+const scale = window.devicePixelRatio;
+
+ctx.scale(scale, scale);
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+/* Load custom font */
+new FontFace("micro5", "url(assets/fonts/micro5.woff2)")
+  .load()
+  .then((font) => document.fonts.add(font));
+
+/* Hide music prompt if user has toggled music */
+if (hasToggledMusic) {
+  musicPromptElement.remove();
+}
+
 // ============
 // CONFIGURATION
 // ============
@@ -23,20 +57,20 @@ const whiteColorRgb = `${parseInt(whiteColor.substring(1, 3), 16)}. ${parseInt(w
 const redColorRgb = `${parseInt(redColor.substring(1, 3), 16)}. ${parseInt(redColor.substring(3, 5), 16)}, ${parseInt(redColor.substring(5, 7), 16)}`;
 
 /* Game settings */
+const gameLives = 3;
 const framesPerSecond = 30;
 const friction = 0.5; // friction coefficient of space
-const gameLives = 3;
-const shipSize = 30; // height in pixels
+const shipSize = 30; // height in px
 const shipThrust = 5; // acceleration of the ship px per sec
 const shipTurnSpeed = 360; // degrees per second
-const roidsJag = 0.3; //jaggedness of the asteroids
-const roidsNum = 8; // starting nb of asteroids
-const roidsSize = 60; // starting size of asteroids in px
+const roidsJag = 0.3; // rocky roids
+const roidsNum = 8; // starting number of asteroids
+const roidsSize = canvas.height / 20; // starting size of asteroids based on canvas height
 const roidsSpeed = 50; // max px per second
-const roidsVert = 10; // average nb of vertices on each asteroid
+const roidsVert = 10; // average number of vertices
 
 /* Points */
-const saveScore = "highScore"; // save key for local storage
+const saveScore = "highScore"; // local storage key for high score
 
 // *****
 // Music
@@ -51,44 +85,6 @@ const battleMusic = new Audio("assets/audio/battle-bg.mp3");
 introMusic.volume = 0.5;
 countdownSound.volume = 0.4;
 battleMusic.volume = 0.15;
-
-/* Music storage */
-const hasToggledMusic = localStorage.getItem("hasToggledMusic");
-
-// *****
-// Elements
-// *****
-
-const canvas = document.getElementById("gameCanvas");
-
-const mainElement = document.querySelector("main");
-const musicElement = document.querySelector(".music-control");
-const musicPromptElement = document.querySelector(".music-prompt");
-
-// ============
-// SETUP
-// ============
-
-/* Canvas context */
-const ctx = canvas.getContext("2d");
-mainElement.focus();
-
-/* Define canvas scale and size */
-const scale = window.devicePixelRatio;
-
-ctx.scale(scale, scale);
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-/* Load custom font */
-new FontFace("micro5", "url(assets/fonts/micro5.woff2)")
-  .load()
-  .then((font) => document.fonts.add(font));
-
-/* Hide music prompt if user has toggled music */
-if (hasToggledMusic) {
-  musicPromptElement.remove();
-}
 
 // ============
 // CORE FUNCTIONS

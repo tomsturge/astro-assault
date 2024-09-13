@@ -20,6 +20,7 @@ const bgColor = "#2c2c2c";
 const redColor = "#c37272";
 const whiteColor = "#bfbfbf";
 const whiteColorRgb = `${parseInt(whiteColor.substring(1, 3), 16)}. ${parseInt(whiteColor.substring(3, 5), 16)}, ${parseInt(whiteColor.substring(5, 7), 16)}`;
+const redColorRgb = `${parseInt(redColor.substring(1, 3), 16)}. ${parseInt(redColor.substring(3, 5), 16)}, ${parseInt(redColor.substring(5, 7), 16)}`;
 
 /* Game settings */
 const framesPerSecond = 30;
@@ -29,8 +30,8 @@ const shipSize = 30; // height in pixels
 const shipThrust = 5; // acceleration of the ship px per sec
 const shipTurnSpeed = 360; // degrees per second
 const roidsJag = 0.3; //jaggedness of the asteroids
-const roidsNum = 6; // starting nb of asteroids
-const roidsSize = 200; // starting size of asteroids in px
+const roidsNum = 8; // starting nb of asteroids
+const roidsSize = 60; // starting size of asteroids in px
 const roidsSpeed = 50; // max px per second
 const roidsVert = 10; // average nb of vertices on each asteroid
 
@@ -170,6 +171,9 @@ const drawThruster = () => {
   ctx.stroke();
 };
 
+// *****
+// New Asteroid
+// *****
 const newAsteroid = (x, y, r) => {
   let lvlMultiply = 1 + 0.1 * level;
   let roid = {
@@ -187,7 +191,7 @@ const newAsteroid = (x, y, r) => {
     offs: [],
   };
 
-  // Create the vertex offets array
+  // Create the vertex offset array
   for (let i = 0; i < roid.vert; i++) {
     roid.offs.push(Math.random() * roidsJag * 2 + 1 - roidsJag);
   }
@@ -195,7 +199,10 @@ const newAsteroid = (x, y, r) => {
   return roid;
 };
 
-const createAsteroidBelt = () => {
+// *****
+// Create asteroid cluster
+// *****
+const createAsteroidCluster = () => {
   roids = [];
   roidsTotal = (roidsNum + level) * 7;
   roidsLeft = roidsTotal;
@@ -206,27 +213,71 @@ const createAsteroidBelt = () => {
       x = Math.floor(Math.random() * canvas.width);
       y = Math.floor(Math.random() * canvas.height);
     } while (distBetweenPoints(ship.x, ship.y, x, y) < roidsSize * 2 + ship.r);
-    roids.push(newAsteroid(x, y, Math.ceil(roidsSize / 2)));
+    roids.push(
+      newAsteroid(
+        x,
+        y,
+        Math.ceil(
+          Math.floor(Math.random() * (roidsSize * 3 - roidsSize)) + roidsSize,
+        ),
+      ),
+    );
   }
+};
+
+// *****
+// Draw asteroid
+// *****
+const drawAsteroid = (i) => {
+  ctx.fillStyle = whiteColor;
+  ctx.lineWidth = shipSize / 20;
+
+  x = roids[i].x;
+  y = roids[i].y;
+  r = roids[i].r;
+  a = roids[i].a;
+  vert = roids[i].vert;
+  offs = roids[i].offs;
+
+  // Draw path
+  ctx.beginPath();
+  ctx.moveTo(x + r * offs[0] * Math.cos(a), y + r * offs[0] * Math.sin(a));
+
+  // Draw polygon
+  for (let j = 1; j < vert; j++) {
+    ctx.lineTo(
+      x + r * offs[j] * Math.cos(a + (j * Math.PI * 2) / vert),
+      y + r * offs[j] * Math.sin(a + (j * Math.PI * 2) / vert),
+    );
+  }
+  ctx.closePath();
+  ctx.fill();
+};
+
+const moveAsteroid = (i) => {
+  roids[i].x += roids[i].xv;
+  roids[i].y += roids[i].yv;
+
+  handleScreenEdge(roids[i]);
 };
 
 const distBetweenPoints = (x1, y1, x2, y2) =>
   Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 
 // *****
-// Handle ship screen edge
+// Handle screen edge
 // *****
-const handleShipScreenEdge = () => {
-  if (ship.x < 0 - ship.r) {
-    ship.x = canvas.width + ship.r;
-  } else if (ship.x > canvas.width + ship.r) {
-    ship.x = 0 - ship.r;
+const handleScreenEdge = (elem) => {
+  if (elem.x < 0 - elem.r) {
+    elem.x = canvas.width + elem.r;
+  } else if (elem.x > canvas.width + elem.r) {
+    elem.x = 0 - elem.r;
   }
 
-  if (ship.y < 0 - ship.r) {
-    ship.y = canvas.height + ship.r;
-  } else if (ship.y > canvas.height + ship.r) {
-    ship.y = 0 - ship.r;
+  if (elem.y < 0 - elem.r) {
+    elem.y = canvas.height + elem.r;
+  } else if (elem.y > canvas.height + elem.r) {
+    elem.y = 0 - elem.r;
   }
 };
 
@@ -237,7 +288,7 @@ const newLevel = () => {
   text = "Level " + (level + 1);
   textAlpha = 1.0;
 
-  createAsteroidBelt();
+  createAsteroidCluster();
 };
 
 // *****
@@ -368,19 +419,19 @@ const introScreen = () => {
 
   /* Title */
   ctx.fillStyle = redColor;
-  ctx.font = "small-caps " + textSize + "px " + fontFamily;
+  ctx.font = `small-caps ${textSize}px ${fontFamily}`;
   ctx.textAlign = "center";
   ctx.fillText("ASTRO ASSAULT", canvas.width / 2, canvas.height / 2);
   /* New game prompt */
   ctx.fillStyle = whiteColor;
-  ctx.font = "small-caps " + textSize / 3 + "px " + fontFamily;
+  ctx.font = `small-caps ${textSize / 3}px ${fontFamily}`;
   ctx.fillText(
     "PRESS SPACE TO START",
     canvas.width / 2,
     canvas.height / 2 + textSize / 2,
   );
 
-  createAsteroidBelt();
+  createAsteroidCluster();
 };
 
 // *****
@@ -421,50 +472,11 @@ const update = () => {
     drawShip(ship.x, ship.y, ship.a);
   }
 
-  /* Draw asteroids */
+  /* Draw and move asteroids */
   let x, y, r, a, vert, offs;
   for (let i = 0; i < roids.length; i++) {
-    ctx.strokeStyle = "rgba(217,241,189,1.00)";
-    ctx.lineWidth = shipSize / 20;
-
-    x = roids[i].x;
-    y = roids[i].y;
-    r = roids[i].r;
-    a = roids[i].a;
-    vert = roids[i].vert;
-    offs = roids[i].offs;
-
-    // Draw path
-    ctx.beginPath();
-    ctx.moveTo(x + r * offs[0] * Math.cos(a), y + r * offs[0] * Math.sin(a));
-
-    // Draw polygon
-    for (let j = 1; j < vert; j++) {
-      ctx.lineTo(
-        x + r * offs[j] * Math.cos(a + (j * Math.PI * 2) / vert),
-        y + r * offs[j] * Math.sin(a + (j * Math.PI * 2) / vert),
-      );
-    }
-    ctx.closePath();
-    ctx.stroke();
-  }
-
-  /* Move asteroids */
-  for (let i = 0; i < roids.length; i++) {
-    roids[i].x += roids[i].xv;
-    roids[i].y += roids[i].yv;
-
-    // Handle edge of screen
-    if (roids[i].x < 0 - roids[i].r) {
-      roids[i].x = canvas.width + roids[i].r;
-    } else if (roids[i].x > canvas.width + roids[i].r) {
-      roids[i].x = 0 - roids[i].r;
-    }
-    if (roids[i].y < 0 - roids[i].r) {
-      roids[i].y = canvas.height + roids[i].r;
-    } else if (roids[i].y > canvas.height + roids[i].r) {
-      roids[i].y = 0 - roids[i].r;
-    }
+    drawAsteroid(i);
+    moveAsteroid(i);
   }
 
   if (ship) {
@@ -487,14 +499,13 @@ const update = () => {
     ship.x += ship.thrust.x;
     ship.y += ship.thrust.y;
 
-    // Handle edge of screen
-    handleShipScreenEdge();
+    handleScreenEdge(ship);
   }
 
   // Draw the game text
   if (textAlpha >= 0) {
-    ctx.fillStyle = "rgba(" + whiteColorRgb + ", " + textAlpha + ")";
-    ctx.font = "small-caps " + (textSize + 20) + "px " + fontFamily;
+    ctx.fillStyle = `rgba(${redColorRgb}, ${textAlpha})`;
+    ctx.font = `small-caps ${textSize + 20}px ${fontFamily}`;
     ctx.textAlign = "center";
     ctx.fillText(text, canvas.width / 2, canvas.height * 0.7);
     textAlpha -= 1.0 / textFadeTime / framesPerSecond;

@@ -19,7 +19,7 @@ const fontFamily = "micro5";
 const bgColor = "#2c2c2c";
 const redColor = "#c37272";
 const whiteColor = "#bfbfbf";
-const whiteColorRgb = "191, 191, 191";
+const whiteColorRgb = `${parseInt(whiteColor.substring(1, 3), 16)}. ${parseInt(whiteColor.substring(3, 5), 16)}, ${parseInt(whiteColor.substring(5, 7), 16)}`;
 
 /* Game settings */
 const framesPerSecond = 30;
@@ -119,7 +119,7 @@ const newShip = () => ({
 // *****
 // Create ship
 // *****
-const drawShip = (x, y, a, color = "#bfbfbf") => {
+const drawShip = (x, y, a, color = whiteColor) => {
   ctx.fillStyle = color;
   ctx.lineWidth = shipSize / 20;
   ctx.beginPath();

@@ -580,14 +580,13 @@ const update = () => {
       drawAsteroid(i);
       moveAsteroid(i);
     }
+    drawThruster();
 
     if (!exploding) {
       if (ship.thrusting && !ship.dead) {
         // Thrust the ship
         ship.thrust.x += (shipThrust * Math.cos(ship.a)) / framesPerSecond;
         ship.thrust.y -= (shipThrust * Math.sin(ship.a)) / framesPerSecond;
-
-        drawThruster();
       } else {
         // Reduce speed when not thrusting
         ship.thrust.x -= (friction * ship.thrust.x) / framesPerSecond;

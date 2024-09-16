@@ -1,6 +1,6 @@
 @font-face {
   font-family: "micro5";
-  src: url("assets/fonts/micro5.woff2") format("woff2");
+  src: url("src/fonts/micro5.woff2") format("woff2");
 }
 
 * {
@@ -33,6 +33,7 @@ canvas {
   color: #bfbfbf;
   cursor: pointer;
   position: relative;
+  background-color: transparent;
 }
 
 .music-control.mute::after {

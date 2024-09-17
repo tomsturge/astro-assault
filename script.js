@@ -59,16 +59,25 @@ const redColorRgb = `${parseInt(redColor.substring(1, 3), 16)}, ${parseInt(redCo
 /* Game settings */
 const framesPerSecond = 30;
 const friction = 0.5; // friction coefficient of space
-const gameLives = 3;
-const shipSize = canvas.height / 36; // height in based on screen height
+const gameLives = 3; // times a player can explode
+const shipSize = canvas.height / 42; // height in based on screen height
 const shipThrust = 5; // acceleration of the ship px per sec
 const shipTurnSpeed = 360; // degrees per second
-const shipExplodeDuration = 0.3;
+const shipExplodeDuration = 0.3; // how long the explosion lasts
+const laserDist = 0.4; // max distance laser can travel
+const laserExplodeDuration = 0.1;
+const laserMax = 10; // max num of lasers on screen at once
+const laserSpeed = 500; // px per sec
 const roidsJag = 0.3; //jaggedness of the asteroids
 const roidsNum = 4; // starting number of asteroids
 const roidsSize = canvas.height / 20; // starting size of asteroids based on screen height
 const roidsSpeed = 50; // max px per second
 const roidsVert = 10; // average number of asteroid vertices
+const thrusterCenterOffset = 0.45; // How far back the thruster is from the ship's center
+const thrusterWidth = 0.6; // Width of the thruster flame
+const thrusterLength = 1.2; // Length of the thruster flame
+const thrusterCoreSize = 0.4; // Size of the bright core
+const thrusterBaseWidth = 0.2; // Width of the flame at its base
 
 /* Points */
 const saveScore = "highScore"; // save key for local storage
@@ -80,12 +89,11 @@ const saveScore = "highScore"; // save key for local storage
 /* Audio files */
 const introMusic = new Audio("src/audio/intro.mp3");
 const battleMusic = new Audio("src/audio/battle.mp3");
-const countdownSound = new Audio("src/audio/countdown.mp3");
 const explosionSound = new Audio("src/audio/explosion.mp3");
+const laserSound = new Audio("src/audio/laser.mp3");
 
 /* Adjust music playback */
 introMusic.volume = 0.5;
-countdownSound.volume = 0.4;
 battleMusic.volume = 0.15;
 battleMusic.playbackRate = 1.2;
 
@@ -172,6 +180,36 @@ const drawShip = (x, y, a, color = whiteColor) => {
 };
 
 // *****
+// Shoot laser
+// *****
+function shootLaser() {
+  if (ship.canShoot && ship.lasers.length < laserMax) {
+    ship.lasers.push({
+      x: ship.x + (4 / 3) * ship.r * Math.cos(ship.a),
+      y: ship.y - (4 / 3) * ship.r * Math.sin(ship.a),
+      xv: (laserSpeed * Math.cos(ship.a)) / framesPerSecond,
+      yv: (-laserSpeed * Math.sin(ship.a)) / framesPerSecond,
+      dist: 0,
+      explodeTime: 0,
+    });
+    laserSound.play();
+  }
+
+  // Prevent further shooting
+  ship.canShoot = false;
+}
+
+// *****
+// Draw laser
+// *****
+const drawLaser = (elem) => {
+  ctx.fillStyle = whiteColor;
+  ctx.beginPath();
+  ctx.arc(elem.x, elem.y, shipSize / 10, 0, Math.PI * 2, false);
+  ctx.fill();
+};
+
+// *****
 // Draw thruster
 // *****
 const drawThruster = () => {
@@ -179,14 +217,19 @@ const drawThruster = () => {
   ctx.translate(ship.x, ship.y);
   ctx.rotate(-ship.a);
 
+  const centerX = -shipSize * thrusterCenterOffset;
+  const flameWidth = shipSize * thrusterWidth;
+  const flameLength = shipSize * thrusterLength;
+  const baseWidth = shipSize * thrusterBaseWidth;
+
   // Main thruster flame
   const gradient = ctx.createRadialGradient(
-    -shipSize * 0.5,
+    centerX,
     0,
     0,
-    -shipSize * 0.5,
+    centerX,
     0,
-    shipSize * 0.8,
+    flameWidth,
   );
   gradient.addColorStop(0, "rgba(255, 200, 0, 1)");
   gradient.addColorStop(0.6, "rgba(255, 100, 0, 0.8)");
@@ -194,32 +237,54 @@ const drawThruster = () => {
 
   ctx.fillStyle = gradient;
   ctx.beginPath();
-  ctx.moveTo(-shipSize * 0.6, shipSize * 0.4);
-  ctx.quadraticCurveTo(-shipSize * 1.1, shipSize * 0.2, -shipSize * 1.1, 0);
+
+  // Start at the narrow base
+  ctx.moveTo(centerX, baseWidth / 2);
+
+  // Curve out to the full width
   ctx.quadraticCurveTo(
-    -shipSize * 1.1,
-    -shipSize * 0.2,
-    -shipSize * 0.6,
-    -shipSize * 0.4,
+    centerX - flameLength * 0.2,
+    flameWidth * 0.4,
+    centerX - flameLength * 0.5,
+    flameWidth / 2,
   );
-  ctx.quadraticCurveTo(-shipSize * 0.8, 0, -shipSize * 0.6, shipSize * 0.4);
+
+  // Extend out the flame shape
+  ctx.quadraticCurveTo(-flameLength, flameWidth / 4, -flameLength, 0);
+  ctx.quadraticCurveTo(
+    -flameLength,
+    -flameWidth / 4,
+    centerX - flameLength * 0.5,
+    -flameWidth / 2,
+  );
+
+  // Mirror the curve back to the narrow base
+  ctx.quadraticCurveTo(
+    centerX - flameLength * 0.2,
+    -flameWidth * 0.4,
+    centerX,
+    -baseWidth / 2,
+  );
+
+  ctx.closePath();
   ctx.fill();
 
-  // Brighter core
+  // Bright core
+  const coreSize = shipSize * thrusterCoreSize;
   const coreGradient = ctx.createRadialGradient(
-    -shipSize * 0.5,
+    centerX,
     0,
     0,
-    -shipSize * 0.5,
+    centerX,
     0,
-    shipSize * 0.4,
+    coreSize,
   );
   coreGradient.addColorStop(0, "rgba(255, 255, 200, 1)");
-  coreGradient.addColorStop(1, "rgba(255, 200, 0, 0)");
+  coreGradient.addColorStop(1, "rgba(255, 255, 200, 0)");
 
   ctx.fillStyle = coreGradient;
   ctx.beginPath();
-  ctx.arc(-shipSize * 0.5, 0, shipSize * 0.4, 0, Math.PI * 2);
+  ctx.arc(centerX, 0, coreSize, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -456,27 +521,27 @@ const keyDown = (e) => {
   }
 
   switch (e.keyCode) {
-    // Spacebar
-    case 32:
-      if (screen === "intro") newGame();
+    case 32: // Spacebar
+      if (screen === "intro") {
+        newGame();
+        break;
+      }
+
+      shootLaser();
       break;
-    // Left arrow
     case 37: // Left
     case 65: // A
       ship.rotation = ((shipTurnSpeed / 360) * Math.PI) / framesPerSecond;
       break;
-    // Up arrow or W
     case 38: // Up
     case 87: // W
       ship.thrusting = true;
       break;
-    // Right arrow
     case 39: // Right
     case 68: // D
       ship.rotation = ((-shipTurnSpeed / 360) * Math.PI) / framesPerSecond;
       break;
-    // Toggle music
-    case 77:
+    case 77: // M
       musicToggle();
       break;
   }
@@ -487,17 +552,17 @@ const keyDown = (e) => {
 // *****
 const keyUp = (e) => {
   switch (e.keyCode) {
-    // Left arrow
+    case 32: // Space Bar
+      ship.canShoot = true;
+      break;
     case 37: // Left
     case 65: // A
       ship.rotation = 0;
       break;
-    // Up arrow
     case 38: // Up
     case 87: // W
       ship.thrusting = false;
       break;
-    // Right arrow
     case 39: // Right
     case 68: // D
       ship.rotation = 0;
@@ -606,7 +671,7 @@ const update = () => {
 
     handleScreenEdge(ship);
 
-    //CHECK FOR ASTEROID COLLISIONS
+    // Check for asteroid collisions
     if (!exploding) {
       if (!ship.dead) {
         for (let i = 0; i < roids.length; i++) {
@@ -621,10 +686,10 @@ const update = () => {
         }
       }
 
-      // ROTATE THE SHIP
+      // Rotate the ship
       ship.a += ship.rotation;
 
-      // MOVE THE SHIP
+      // Move the ship
       ship.x += ship.thrust.x;
       ship.y += ship.thrust.y;
     } else {
@@ -636,6 +701,44 @@ const update = () => {
         introScreen();
         ship = null;
       }
+    }
+
+    // Draw the lasers
+    for (let i = 0; i < ship.lasers.length; i++) {
+      if (ship.lasers[i].explodeTime == 0) {
+        drawLaser(ship.lasers[i]);
+      }
+    }
+
+    // Move the lasers
+    for (let i = ship.lasers.length - 1; i >= 0; i--) {
+      // Checked distance travelled
+      if (ship.lasers[i].dist > laserDist * canvas.width) {
+        ship.lasers.splice(i, 1);
+        continue;
+      }
+
+      // Handle the explosion
+      if (ship.lasers[i].explodeTime > 0) {
+        ship.lasers[i].explodeTime--;
+
+        // Destroy the laser after duration
+        if (ship.lasers[i].explodeTime == 0) {
+          ship.lasers.splice(i, 1);
+          continue;
+        }
+      } else {
+        // Move the laser
+        ship.lasers[i].x += ship.lasers[i].xv;
+        ship.lasers[i].y += ship.lasers[i].yv;
+
+        // Calculate the distance travelled
+        ship.lasers[i].dist += Math.sqrt(
+          Math.pow(ship.lasers[i].xv, 2) + Math.pow(ship.lasers[i].yv, 2),
+        );
+      }
+
+      handleScreenEdge(ship.lasers[i]);
     }
   }
 

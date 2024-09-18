@@ -73,6 +73,9 @@ const roidsNum = 4; // starting number of asteroids
 const roidsSize = canvas.height / 20; // starting size of asteroids based on screen height
 const roidsSpeed = 50; // max px per second
 const roidsVert = 10; // average number of asteroid vertices
+const roidsLargePts = 20; // points scored for large asteroid
+const roidsMediumPts = 50; // points scored for medium asteroid
+const roidsSmallPts = 100; // points scored for small asteroid
 const thrusterCenterOffset = 0.45; // How far back the thruster is from the ship's center
 const thrusterWidth = 0.6; // Width of the thruster flame
 const thrusterLength = 1.2; // Length of the thruster flame
@@ -431,6 +434,52 @@ const moveAsteroid = (i) => {
   handleScreenEdge(roids[i]);
 };
 
+// *****
+// Destroy asteroid
+// *****
+const destroyAsteroid = (index) => {
+  let x = roids[index].x;
+  let y = roids[index].y;
+  let r = roids[index].r;
+
+  console.log(r, Math.ceil(roidsSize / 2));
+
+  // Split the asteroid in 2
+  if (r > Math.ceil(roidsSize / 1.125)) {
+    roids.push(newAsteroid(x, y, Math.ceil(roidsSize / 1.125)));
+    roids.push(newAsteroid(x, y, Math.ceil(roidsSize / 1.125)));
+    score += roidsLargePts;
+  } else if (r == Math.ceil(roidsSize / 1.125)) {
+    roids.push(newAsteroid(x, y, Math.ceil(roidsSize / 2.25)));
+    roids.push(newAsteroid(x, y, Math.ceil(roidsSize / 2.25)));
+    score += roidsMediumPts;
+  } else {
+    score += roidsSmallPts;
+  }
+
+  // Check high score
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem(saveScore, highScore);
+  }
+
+  // Destroy the last fragment of asteroid
+  roids.splice(index, 1);
+  // hitSound.play();
+
+  // Ratio of remaining asteroids for music tempo
+  roidsLeft--;
+
+  // Then new level starts
+  if (roids.length === 0) {
+    level++;
+    newLevel();
+  }
+};
+
+// *****
+// Distance between points
+// *****
 const distBetweenPoints = (x1, y1, x2, y2) =>
   Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 
@@ -438,16 +487,18 @@ const distBetweenPoints = (x1, y1, x2, y2) =>
 // Handle screen edge
 // *****
 const handleScreenEdge = (elem) => {
-  if (elem.x < 0 - elem.r) {
-    elem.x = canvas.width + elem.r;
-  } else if (elem.x > canvas.width + elem.r) {
-    elem.x = 0 - elem.r;
+  r = elem.r || 0;
+
+  if (elem.x < 0 - r) {
+    elem.x = canvas.width + r;
+  } else if (elem.x > canvas.width + r) {
+    elem.x = 0 - r;
   }
 
-  if (elem.y < 0 - elem.r) {
-    elem.y = canvas.height + elem.r;
-  } else if (elem.y > canvas.height + elem.r) {
-    elem.y = 0 - elem.r;
+  if (elem.y < 0 - r) {
+    elem.y = canvas.height + r;
+  } else if (elem.y > canvas.height + r) {
+    elem.y = 0 - r;
   }
 };
 
@@ -469,7 +520,6 @@ const music = (state = true) => {
     if (!ship) {
       // Stop battle music and rest time
       battleMusic.pause();
-      countdownSound.currentTime = 0;
       battleMusic.currentTime = 0;
 
       // Play calm intro music
@@ -479,7 +529,7 @@ const music = (state = true) => {
       introMusic.pause();
       introMusic.currentTime = 0;
 
-      // Delay battle music for countdown
+      // Play battle music
       battleMusic.play();
       battleMusic.play();
     }
@@ -595,6 +645,14 @@ const introScreen = () => {
   );
   ctx.restore();
 
+  if (highScore) {
+    // Show high score
+    ctx.fillStyle = "#C9C9C9";
+    ctx.font = textSize / 1.5 + "px micro5";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("High Score: " + highScore, canvas.width / 2, shipSize * 2);
+  }
   music();
 };
 
@@ -739,6 +797,41 @@ const update = () => {
       }
 
       handleScreenEdge(ship.lasers[i]);
+    }
+
+    // Draw score
+    ctx.fillStyle = "#C9C9C9";
+    ctx.font = textSize / 2 + "px micro5";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText(score, canvas.width / 2, shipSize * 2);
+
+    // Detect laser hits on asteroid
+    let ax, ay, ar, lx, ly;
+    for (let i = roids.length - 1; i >= 0; i--) {
+      // Get asteroid position
+      ax = roids[i].x;
+      ay = roids[i].y;
+      ar = roids[i].r;
+
+      // Iterate lasers
+      for (let j = ship.lasers.length - 1; j >= 0; j--) {
+        lx = ship.lasers[j].x;
+        ly = ship.lasers[j].y;
+
+        // Detect hits
+        if (
+          ship.lasers[j].explodeTime === 0 &&
+          distBetweenPoints(ax, ay, lx, ly) < ar
+        ) {
+          // Destroy the asteroid and laser
+          destroyAsteroid(i);
+          ship.lasers[j].explodeTime = Math.ceil(
+            laserExplodeDuration * framesPerSecond,
+          );
+          break;
+        }
+      }
     }
   }
 

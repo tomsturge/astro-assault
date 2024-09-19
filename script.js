@@ -44,7 +44,7 @@ if (hasToggledMusic) {
 let screen = "intro";
 let musicOn = false;
 let gameTime = 0;
-let level, roids, ship, lives, score, highScore, text, textAlpha;
+let level, roids, ship, lives, score, text, textAlpha;
 
 /* UI Values */
 const textSize = 180; // in px
@@ -60,22 +60,26 @@ const redColorRgb = `${parseInt(redColor.substring(1, 3), 16)}, ${parseInt(redCo
 const framesPerSecond = 30;
 const friction = 0.5; // friction coefficient of space
 const gameLives = 3; // times a player can explode
+
 const shipSize = canvas.height / 42; // height in based on screen height
 const shipThrust = 5; // acceleration of the ship px per sec
 const shipTurnSpeed = 360; // degrees per second
 const shipExplodeDuration = 0.3; // how long the explosion lasts
+
 const laserDist = 0.4; // max distance laser can travel
 const laserExplodeDuration = 0.1;
 const laserMax = 10; // max num of lasers on screen at once
 const laserSpeed = 500; // px per sec
-const roidsJag = 0.3; //jaggedness of the asteroids
+
+const roidsJag = 0.3; // jaggedness of the asteroids
 const roidsNum = 4; // starting number of asteroids
 const roidsSize = canvas.height / 20; // starting size of asteroids based on screen height
 const roidsSpeed = 50; // max px per second
 const roidsVert = 10; // average number of asteroid vertices
-const roidsLargePts = 20; // points scored for large asteroid
-const roidsMediumPts = 50; // points scored for medium asteroid
-const roidsSmallPts = 100; // points scored for small asteroid
+const roidsLargePts = 10; // large asteroid points
+const roidsMediumPts = 20; // medium asteroid points
+const roidsSmallPts = 40; // small asteroid points
+
 const thrusterCenterOffset = 0.45; // How far back the thruster is from the ship's center
 const thrusterWidth = 0.6; // Width of the thruster flame
 const thrusterLength = 1.2; // Length of the thruster flame
@@ -84,6 +88,7 @@ const thrusterBaseWidth = 0.2; // Width of the flame at its base
 
 /* Points */
 const saveScore = "highScore"; // save key for local storage
+let highScore = localStorage.getItem(saveScore);
 
 // *****
 // Music
@@ -94,6 +99,7 @@ const introMusic = new Audio("src/audio/intro.mp3");
 const battleMusic = new Audio("src/audio/battle.mp3");
 const explosionSound = new Audio("src/audio/explosion.mp3");
 const laserSound = new Audio("src/audio/laser.mp3");
+const thrustSound = new Audio("src/audio/thrust.mp3");
 
 /* Adjust music playback */
 introMusic.volume = 0.5;
@@ -185,7 +191,7 @@ const drawShip = (x, y, a, color = whiteColor) => {
 // *****
 // Shoot laser
 // *****
-function shootLaser() {
+const shootLaser = () => {
   if (ship.canShoot && ship.lasers.length < laserMax) {
     ship.lasers.push({
       x: ship.x + (4 / 3) * ship.r * Math.cos(ship.a),
@@ -200,7 +206,7 @@ function shootLaser() {
 
   // Prevent further shooting
   ship.canShoot = false;
-}
+};
 
 // *****
 // Draw laser
@@ -442,16 +448,19 @@ const destroyAsteroid = (index) => {
   let y = roids[index].y;
   let r = roids[index].r;
 
-  console.log(r, Math.ceil(roidsSize / 2));
+  const splitAsteroid = () => {
+    const halfSize = Math.ceil(r / 2);
+
+    roids.push(newAsteroid(x, y, halfSize));
+    roids.push(newAsteroid(x, y, halfSize));
+  };
 
   // Split the asteroid in 2
   if (r > Math.ceil(roidsSize / 1.125)) {
-    roids.push(newAsteroid(x, y, Math.ceil(roidsSize / 1.125)));
-    roids.push(newAsteroid(x, y, Math.ceil(roidsSize / 1.125)));
+    splitAsteroid();
     score += roidsLargePts;
-  } else if (r == Math.ceil(roidsSize / 1.125)) {
-    roids.push(newAsteroid(x, y, Math.ceil(roidsSize / 2.25)));
-    roids.push(newAsteroid(x, y, Math.ceil(roidsSize / 2.25)));
+  } else if (r < Math.ceil(roidsSize / 1.125) && r > Math.ceil(roidsSize / 2)) {
+    splitAsteroid();
     score += roidsMediumPts;
   } else {
     score += roidsSmallPts;
@@ -632,27 +641,34 @@ const introScreen = () => {
 
   /* Title */
   ctx.fillStyle = redColor;
-  ctx.font = `small-caps ${textSize}px ${fontFamily}`;
+  ctx.font = `normal ${textSize}px ${fontFamily}`;
   ctx.textAlign = "center";
   ctx.fillText("ASTRO ASSAULT", canvas.width / 2, canvas.height / 2);
+
   /* New game prompt */
   ctx.fillStyle = whiteColor;
-  ctx.font = `small-caps ${textSize / 3}px ${fontFamily}`;
+  ctx.font = `normal ${textSize / 4}px ${fontFamily}`;
   ctx.fillText(
     "PRESS SPACE TO START",
     canvas.width / 2,
     canvas.height / 2 + textSize / 2,
   );
+
+  /* New game prompt */
+  ctx.fillStyle = `rgba(${whiteColorRgb}, 0.5)`;
+  ctx.font = `normal ${textSize / 4}px ${fontFamily}`;
+  ctx.fillText("By Tom Sturge", canvas.width / 2, canvas.height - shipSize * 2);
   ctx.restore();
 
   if (highScore) {
     // Show high score
-    ctx.fillStyle = "#C9C9C9";
-    ctx.font = textSize / 1.5 + "px micro5";
+    ctx.fillStyle = whiteColor;
+    ctx.font = textSize / 2 + "px micro5";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("High Score: " + highScore, canvas.width / 2, shipSize * 2);
   }
+
   music();
 };
 
@@ -710,11 +726,15 @@ const update = () => {
         ship.thrust.x += (shipThrust * Math.cos(ship.a)) / framesPerSecond;
         ship.thrust.y -= (shipThrust * Math.sin(ship.a)) / framesPerSecond;
 
+        thrustSound.play();
         drawThruster();
       } else {
         // Reduce speed when not thrusting
         ship.thrust.x -= (friction * ship.thrust.x) / framesPerSecond;
         ship.thrust.y -= (friction * ship.thrust.y) / framesPerSecond;
+
+        thrustSound.pause();
+        thrustSound.currentTime = 0;
       }
     } else {
       drawExplosion(ship.x, ship.y, 50, ship.r);
@@ -838,7 +858,7 @@ const update = () => {
   // Draw the game text
   if (textAlpha >= 0) {
     ctx.fillStyle = `rgba(${redColorRgb}, ${textAlpha})`;
-    ctx.font = `small-caps ${textSize + 20}px ${fontFamily}`;
+    ctx.font = `normal ${textSize + 20}px ${fontFamily}`;
     ctx.textAlign = "center";
     ctx.fillText(text, canvas.width / 2, canvas.height * 0.7);
     textAlpha -= 1.0 / textFadeTime / framesPerSecond;

@@ -81,3 +81,43 @@ canvas {
     transform: translateY(1.25rem);
   }
 }
+
+.mobile {
+  display: none;
+
+  @media (max-width: 84rem) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    position: absolute;
+    background-color: #2b2b2b;
+    color: #bfbfbf;
+    border: 0.5rem solid #bfbfbf;
+    padding: 2rem 3rem;
+    text-align: center;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0 1rem;
+    min-width: 80%;
+    font-size: 4rem;
+    font-family: micro5, monospace;
+  }
+
+  h1 {
+    font-size: 6rem;
+    text-transform: uppercase;
+    color: #c37272;
+    line-height: 0.6;
+    margin-bottom: 2rem;
+  }
+
+  p {
+    line-height: 0.7;
+  }
+
+  p:not(:last-child) {
+    margin-bottom: 2rem;
+  }
+}
